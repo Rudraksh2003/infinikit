@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "type": "registry",
+  "type": "registry:component",
   "name": "infinikit",
   "homepage": "https://rudrakshladdha.online/",
   "items": [
