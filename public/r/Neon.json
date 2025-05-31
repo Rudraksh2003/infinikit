@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "Neon",
+  "type": "registry:component",
+  "title": "Neon",
+  "description": "A Neon Heading",
+  "dependencies": [
+    "Heading"
+  ],
+  "registryDependencies": [
+    "Heading"
+  ],
+  "files": [
+    {
+      "path": "registry/Infinikit/Neon/Neon.tsx",
+      "content": "import React, { ReactNode, useEffect } from \"react\";\n\ninterface HeadingProps {\n  children: ReactNode;\n  className?: string;\n}\n\nconst NeonHeading = ({ children, className = \"\" }: HeadingProps) => {\n  const uniqueId = React.useId().replace(/:/g, \"\");\n  const animationName = `neonGlow-${uniqueId}`;\n  \n  useEffect(() => {\n    const styleId = `neon-style-${uniqueId}`;\n    \n    if (document.getElementById(styleId)) {\n      return;\n    }\n    \n    const style = document.createElement('style');\n    style.id = styleId;\n    style.textContent = `\n      @keyframes ${animationName} {\n        0% {\n          text-shadow: \n            0 0 5px rgba(255, 105, 180, 0.6),\n            0 0 10px rgba(255, 223, 0, 0.6),\n            0 0 15px rgba(64, 224, 208, 0.6),\n            0 0 20px rgba(255, 105, 180, 0.3);\n        }\n        50% {\n          text-shadow: \n            0 0 10px rgba(255, 105, 180, 0.8),\n            0 0 20px rgba(255, 223, 0, 0.8),\n            0 0 30px rgba(64, 224, 208, 0.8),\n            0 0 40px rgba(255, 105, 180, 0.5);\n        }\n        100% {\n          text-shadow: \n            0 0 5px rgba(255, 105, 180, 0.6),\n            0 0 10px rgba(255, 223, 0, 0.6),\n            0 0 15px rgba(64, 224, 208, 0.6),\n            0 0 20px rgba(255, 105, 180, 0.3);\n        }\n      }\n      \n      .neon-text-${uniqueId} {\n        animation: ${animationName} 2s ease-in-out infinite;\n        transition: all 0.3s ease;\n      }\n      \n      .neon-text-${uniqueId}:hover {\n        transform: scale(1.05);\n        text-shadow: \n          0 0 15px rgba(255, 105, 180, 1),\n          0 0 25px rgba(255, 223, 0, 1),\n          0 0 35px rgba(64, 224, 208, 1),\n          0 0 45px rgba(255, 105, 180, 0.7) !important;\n      }\n      \n      @media (prefers-color-scheme: dark) {\n        .neon-text-${uniqueId} {\n          color: #ffffff;\n        }\n      }\n      \n      @media (prefers-color-scheme: light) {\n        .neon-text-${uniqueId} {\n          color: #1f2937;\n        }\n      }\n    `;\n    \n    document.head.appendChild(style);\n    \n    return () => {\n      const existingStyle = document.getElementById(styleId);\n      if (existingStyle) {\n        existingStyle.remove();\n      }\n    };\n  }, [animationName, uniqueId]);\n  \n  return (\n    <h1\n      className={`neon-text-${uniqueId} relative inline-block text-3xl font-bold cursor-pointer group ${className}`}\n    >\n      {children}\n      <span\n      />\n    </h1>\n  );\n};\nexport default NeonHeading;\n/*\n// Demo component to test the heading\nconst HeadingDemo = () => {\n  return (\n    <div className=\"flex flex-col items-center justify-center p-8 space-y-8 min-h-screen bg-gray-100 dark:bg-gray-900\">\n      <Heading>Neon Glow Effect</Heading>\n      <Heading className=\"text-4xl\">Larger Heading</Heading>\n      <Heading className=\"text-purple-600\">Custom Color</Heading>\n      <p className=\"text-gray-600 dark:text-gray-300 mt-8 text-center\">\n        The headings should have a pulsing neon glow effect.<br/>\n        Hover over them to see the enhanced glow and underline animation.\n      </p>\n    </div>\n  );\n};\n\nexport default HeadingDemo;*/",
+      "type": "registry:component"
+    }
+  ]
+}
