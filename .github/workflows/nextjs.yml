@@ -1,0 +1,195 @@
+# .github/workflows/deploy-registry.yml
+name: Deploy Infinikit Registry to GitHub Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      
+      - name: Validate Registry
+        run: |
+          echo "Validating registry.json..."
+          node -e "
+            const fs = require('fs');
+            try {
+              const registry = JSON.parse(fs.readFileSync('registry.json', 'utf8'));
+              console.log('✅ Registry JSON is valid');
+              console.log('📦 Found', registry.items.length, 'components');
+              
+              // Check if all component files exist
+              for (const item of registry.items) {
+                const componentFile = item.name + '.json';
+                if (fs.existsSync(componentFile)) {
+                  console.log('✅ Component file exists:', componentFile);
+                } else {
+                  console.warn('⚠️  Component file missing:', componentFile);
+                }
+              }
+            } catch (error) {
+              console.error('❌ Registry validation failed:', error.message);
+              process.exit(1);
+            }
+          "
+      
+      - name: Create public directory
+        run: |
+          mkdir -p public
+          
+      - name: Copy registry files
+        run: |
+          # Copy main registry file
+          cp registry.json public/
+          
+          # Copy all component JSON files
+          cp *.json public/ 2>/dev/null || true
+          
+          # Create an index.html for better UX
+          cat > public/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Infinikit Registry</title>
+              <style>
+                  body { 
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                      max-width: 800px; 
+                      margin: 2rem auto; 
+                      padding: 0 1rem;
+                      line-height: 1.6;
+                  }
+                  .header { text-align: center; margin-bottom: 2rem; }
+                  .badge { 
+                      background: #0070f3; 
+                      color: white; 
+                      padding: 0.25rem 0.75rem; 
+                      border-radius: 0.5rem;
+                      font-size: 0.875rem;
+                      margin: 0 0.25rem;
+                  }
+                  .code { 
+                      background: #f4f4f4; 
+                      padding: 1rem; 
+                      border-radius: 0.5rem;
+                      font-family: 'Courier New', monospace;
+                      overflow-x: auto;
+                  }
+                  .component {
+                      border: 1px solid #e1e1e1;
+                      border-radius: 0.5rem;
+                      padding: 1rem;
+                      margin: 1rem 0;
+                  }
+                  .endpoint {
+                      background: #e7f3ff;
+                      padding: 0.5rem;
+                      border-radius: 0.25rem;
+                      font-family: monospace;
+                      word-break: break-all;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="header">
+                  <h1>🚀 Infinikit Registry</h1>
+                  <p>A modern collection of React components for shadcn/ui</p>
+                  <span class="badge">shadcn/ui</span>
+                  <span class="badge">React</span>
+                  <span class="badge">TypeScript</span>
+              </div>
+              
+              <h2>📋 Registry Endpoint</h2>
+              <div class="endpoint">
+                  https://rudraksh2003.github.io/infinikit/registry.json
+              </div>
+              
+              <h2>🔧 Installation</h2>
+              <div class="code">
+                  # Add a component from this registry<br>
+                  npx shadcn-ui@latest add --registry https://rudraksh2003.github.io/infinikit/registry.json [component-name]<br><br>
+                  
+                  # Set as default registry<br>
+                  npx shadcn-ui@latest init --registry https://rudraksh2003.github.io/infinikit/registry.json
+              </div>
+              
+              <h2>📦 Available Components</h2>
+              <div id="components">Loading components...</div>
+              
+              <script>
+                  fetch('./registry.json')
+                      .then(response => response.json())
+                      .then(data => {
+                          const container = document.getElementById('components');
+                          container.innerHTML = '';
+                          
+                          data.items.forEach(item => {
+                              const div = document.createElement('div');
+                              div.className = 'component';
+                              div.innerHTML = `
+                                  <h3>${item.title || item.name}</h3>
+                                  <p>${item.description}</p>
+                                  <div class="code">npx shadcn-ui@latest add --registry https://rudraksh2003.github.io/infinikit/registry.json ${item.name}</div>
+                              `;
+                              container.appendChild(div);
+                          });
+                      })
+                      .catch(error => {
+                          document.getElementById('components').innerHTML = 'Error loading components';
+                          console.error('Error:', error);
+                      });
+              </script>
+              
+              <footer style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e1e1e1;">
+                  <p>Made with ❤️ by <a href="https://rudrakshladdha.online">Rudraksh Laddha</a></p>
+                  <p><a href="https://github.com/Rudraksh2003/infinikit">View on GitHub</a></p>
+              </footer>
+          </body>
+          </html>
+          EOF
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
